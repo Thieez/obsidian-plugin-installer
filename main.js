@@ -505,13 +505,17 @@ var PluginZipInstaller = class extends import_obsidian.Plugin {
     this.addSettingTab(new InstallerSettingTab(this.app, this));
   }
   async installArchive(file) {
-    var _a2;
+    var _a2, _b2;
     if (!file.name.toLowerCase().endsWith(".zip")) {
       throw new Error("Choose a .zip file containing a built Obsidian plugin.");
     }
     const archive = unzipSync(new Uint8Array(await file.arrayBuffer()));
     const plugin = findPlugin(archive);
     const pluginPath = `${this.app.vault.configDir}/plugins/${plugin.manifest.id}`;
+    const pluginManager = this.app.plugins;
+    if (!pluginManager || typeof pluginManager.enablePluginAndSave !== "function") {
+      throw new Error("This Obsidian version cannot enable plugins automatically. Enable it in Community plugins.");
+    }
     for (const [relativePath, contents] of plugin.files) {
       const destination = `${pluginPath}/${relativePath}`;
       await ensureParentDirectories(this.app, destination);
@@ -519,7 +523,14 @@ var PluginZipInstaller = class extends import_obsidian.Plugin {
       new Uint8Array(binary).set(contents);
       await this.app.vault.adapter.writeBinary(destination, binary);
     }
-    new import_obsidian.Notice(`Installed ${(_a2 = plugin.manifest.name) != null ? _a2 : plugin.manifest.id}. Enable or reload it in Community plugins.`);
+    try {
+      await pluginManager.enablePluginAndSave(plugin.manifest.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      new import_obsidian.Notice(`Installed ${(_a2 = plugin.manifest.name) != null ? _a2 : plugin.manifest.id}, but could not enable it: ${message}`, 1e4);
+      return;
+    }
+    new import_obsidian.Notice(`Installed and enabled ${(_b2 = plugin.manifest.name) != null ? _b2 : plugin.manifest.id}.`);
   }
 };
 var InstallerSettingTab = class extends import_obsidian.PluginSettingTab {

@@ -52,9 +52,16 @@ function zipFile(entries) {
 function createApp() {
 	const files = new Map();
 	const directories = new Set([".obsidian"]);
+	const enabledPlugins = [];
 	return {
 		files,
 		directories,
+		enabledPlugins,
+		plugins: {
+			async enablePluginAndSave(pluginId) {
+				enabledPlugins.push(pluginId);
+			},
+		},
 		vault: {
 			configDir: ".obsidian",
 			adapter: {
@@ -97,7 +104,8 @@ test("installs a single plugin from an enclosing ZIP folder", async () => {
 		new TextDecoder().decode(app.files.get(".obsidian/plugins/example-vault-addon/main.js")),
 		"plugin build",
 	);
-	assert.match(notices.at(-1), /Installed Example/);
+	assert.deepEqual(app.enabledPlugins, ["example-vault-addon"]);
+	assert.match(notices.at(-1), /Installed and enabled Example/);
 });
 
 test("defaults to main.js when the plugin manifest omits main", async () => {
@@ -117,7 +125,26 @@ test("defaults to main.js when the plugin manifest omits main", async () => {
 		new TextDecoder().decode(app.files.get(".obsidian/plugins/note-thieez/main.js")),
 		"note build",
 	);
-	assert.match(notices.at(-1), /Installed Note\.thieez/);
+	assert.deepEqual(app.enabledPlugins, ["note-thieez"]);
+	assert.match(notices.at(-1), /Installed and enabled Note\.thieez/);
+});
+
+test("reports when the plugin manager cannot enable the installed plugin", async () => {
+	const app = createApp();
+	app.plugins.enablePluginAndSave = async () => {
+		throw new Error("plugin failed to load");
+	};
+	const plugin = new PluginZipInstaller(app);
+	const archive = zipFile({
+		"manifest.json": JSON.stringify({ id: "example-vault-addon" }),
+		"main.js": "plugin build",
+	});
+
+	await plugin.installArchive(archive);
+
+	assert.ok(app.files.has(".obsidian/plugins/example-vault-addon/main.js"));
+	assert.match(notices.at(-1), /Installed example-vault-addon, but could not enable it/);
+	assert.match(notices.at(-1), /plugin failed to load/);
 });
 
 test("rejects ZIPs that do not contain a built plugin", async () => {

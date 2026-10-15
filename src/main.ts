@@ -13,6 +13,10 @@ interface ArchivePlugin {
 	files: Map<string, Uint8Array>;
 }
 
+interface PluginManager {
+	enablePluginAndSave(pluginId: string): Promise<void>;
+}
+
 export default class PluginZipInstaller extends Plugin {
 	async onload(): Promise<void> {
 		this.addSettingTab(new InstallerSettingTab(this.app, this));
@@ -26,6 +30,10 @@ export default class PluginZipInstaller extends Plugin {
 		const archive = unzipSync(new Uint8Array(await file.arrayBuffer()));
 		const plugin = findPlugin(archive);
 		const pluginPath = `${this.app.vault.configDir}/plugins/${plugin.manifest.id}`;
+		const pluginManager = (this.app as App & { plugins?: PluginManager }).plugins;
+		if (!pluginManager || typeof pluginManager.enablePluginAndSave !== "function") {
+			throw new Error("This Obsidian version cannot enable plugins automatically. Enable it in Community plugins.");
+		}
 
 		for (const [relativePath, contents] of plugin.files) {
 			const destination = `${pluginPath}/${relativePath}`;
@@ -35,7 +43,15 @@ export default class PluginZipInstaller extends Plugin {
 			await this.app.vault.adapter.writeBinary(destination, binary);
 		}
 
-		new Notice(`Installed ${plugin.manifest.name ?? plugin.manifest.id}. Enable or reload it in Community plugins.`);
+		try {
+			await pluginManager.enablePluginAndSave(plugin.manifest.id);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			new Notice(`Installed ${plugin.manifest.name ?? plugin.manifest.id}, but could not enable it: ${message}`, 10000);
+			return;
+		}
+
+		new Notice(`Installed and enabled ${plugin.manifest.name ?? plugin.manifest.id}.`);
 	}
 }
 
