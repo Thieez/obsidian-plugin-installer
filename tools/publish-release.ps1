@@ -20,6 +20,7 @@ $repo = 'Thieez/obsidian-plugin-installer'
 $manifestPath = Join-Path $repoRoot 'manifest.json'
 $versionsPath = Join-Path $repoRoot 'versions.json'
 $mainPath = Join-Path $repoRoot 'main.js'
+$stylesPath = Join-Path $repoRoot 'styles.css'
 
 function Require-Command([string]$Name) {
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
@@ -38,8 +39,8 @@ try {
 
     if ($Version -ieq 'Auto') {
         $knownVersions = @([version]$manifest.version)
-        foreach ($tagName in @(git tag --list 'v*')) {
-            if ($tagName -match '^v(\d+\.\d+\.\d+)$') {
+        foreach ($tagName in @(git tag --list)) {
+            if ($tagName -match '^v?(\d+\.\d+\.\d+)$') {
                 $knownVersions += [version]$Matches[1]
             }
         }
@@ -48,7 +49,7 @@ try {
         Write-Host "Auto-selected release version $Version." -ForegroundColor Cyan
     }
 
-    $tag = "v$Version"
+    $tag = $Version
     $distPath = Join-Path $repoRoot 'dist'
     $archivePath = Join-Path $distPath "plugin-zip-installer-$Version.zip"
     $status = git status --porcelain
@@ -96,14 +97,16 @@ try {
         throw 'Plugin build or tests failed.'
     }
 
-    if (-not (Test-Path -LiteralPath $mainPath -PathType Leaf)) {
-        throw "Plugin build was not created: $mainPath"
+    foreach ($releaseFile in @($mainPath, $stylesPath)) {
+        if (-not (Test-Path -LiteralPath $releaseFile -PathType Leaf)) {
+            throw "Plugin release file was not created: $releaseFile"
+        }
     }
     New-Item -ItemType Directory -Path $distPath -Force | Out-Null
     if (Test-Path -LiteralPath $archivePath) {
         Remove-Item -LiteralPath $archivePath -Force
     }
-    Compress-Archive -LiteralPath $mainPath, $manifestPath -DestinationPath $archivePath
+    Compress-Archive -LiteralPath $mainPath, $manifestPath, $stylesPath -DestinationPath $archivePath
 
     if ($versionChanged -or $versionsChanged) {
         git add manifest.json versions.json main.js
@@ -130,7 +133,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Could not push tag $tag." }
     }
 
-    $releaseAssets = @($mainPath, $manifestPath, $versionsPath, $archivePath)
+    $releaseAssets = @($mainPath, $manifestPath, $stylesPath, $versionsPath, $archivePath)
     $previousErrorActionPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'

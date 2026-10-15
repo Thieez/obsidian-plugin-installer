@@ -77,7 +77,7 @@ test("installs a single plugin from an enclosing ZIP folder", async () => {
 	const plugin = new PluginZipInstaller(app);
 	const archive = zipFile({
 		"release/manifest.json": JSON.stringify({
-			id: "example-plugin",
+			id: "example-vault-addon",
 			name: "Example",
 			main: "main.js",
 		}),
@@ -89,12 +89,12 @@ test("installs a single plugin from an enclosing ZIP folder", async () => {
 	await plugin.installArchive(archive);
 
 	assert.deepEqual([...app.files.keys()].sort(), [
-		".obsidian/plugins/example-plugin/assets/data.json",
-		".obsidian/plugins/example-plugin/main.js",
-		".obsidian/plugins/example-plugin/manifest.json",
+		".obsidian/plugins/example-vault-addon/assets/data.json",
+		".obsidian/plugins/example-vault-addon/main.js",
+		".obsidian/plugins/example-vault-addon/manifest.json",
 	]);
 	assert.equal(
-		new TextDecoder().decode(app.files.get(".obsidian/plugins/example-plugin/main.js")),
+		new TextDecoder().decode(app.files.get(".obsidian/plugins/example-vault-addon/main.js")),
 		"plugin build",
 	);
 	assert.match(notices.at(-1), /Installed Example/);
@@ -105,7 +105,7 @@ test("rejects ZIPs that do not contain a built plugin", async () => {
 	const plugin = new PluginZipInstaller(app);
 
 	await assert.rejects(
-		plugin.installArchive(zipFile({ "manifest.json": JSON.stringify({ id: "example-plugin" }) })),
+		plugin.installArchive(zipFile({ "manifest.json": JSON.stringify({ id: "example-vault-addon" }) })),
 		/valid manifest\.json and main\.js/,
 	);
 	assert.equal(app.files.size, 0);

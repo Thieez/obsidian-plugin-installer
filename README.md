@@ -24,6 +24,7 @@ npm run build
 
 From the koud workspace, run `koud release Thieez/obsidian-plugin-installer`.
 This runs the build and tests, updates `manifest.json` and `versions.json`, and
-publishes the built plugin files plus an installable ZIP to GitHub Releases.
+publishes `main.js`, `manifest.json`, `styles.css`, and an installable ZIP to
+GitHub Releases.
 Use `-Version 1.2.3` to choose a version instead of the automatically selected
 next patch version.

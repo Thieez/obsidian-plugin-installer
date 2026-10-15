@@ -1,5 +1,5 @@
 {
-    "id":  "plugin-zip-installer",
+    "id": "zip-installer",
     "name":  "Plugin ZIP Installer",
     "version":  "0.1.1",
     "minAppVersion":  "1.5.0",
