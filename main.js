@@ -553,6 +553,7 @@ var InstallerSettingTab = class extends import_obsidian.PluginSettingTab {
   }
 };
 function findPlugin(archive) {
+  var _a2;
   const files = /* @__PURE__ */ new Map();
   for (const [archivePath, contents] of Object.entries(archive)) {
     const path = normalizeArchivePath(archivePath);
@@ -564,9 +565,9 @@ function findPlugin(archive) {
     if (path !== "manifest.json" && !path.endsWith("/manifest.json")) continue;
     try {
       const manifest = JSON.parse(new TextDecoder().decode(contents));
-      if (typeof manifest.id !== "string" || !/^[a-z0-9-]+$/.test(manifest.id) || typeof manifest.main !== "string") continue;
+      if (typeof manifest.id !== "string" || !/^[a-z0-9-]+$/.test(manifest.id) || manifest.main !== void 0 && typeof manifest.main !== "string") continue;
       const root = path === "manifest.json" ? "" : path.slice(0, -"manifest.json".length);
-      const main = normalizeArchivePath(`${root}${manifest.main}`);
+      const main = normalizeArchivePath(`${root}${(_a2 = manifest.main) != null ? _a2 : "main.js"}`);
       if (!main || !files.has(main)) continue;
       candidates.push({ manifest, root, files });
     } catch (e) {

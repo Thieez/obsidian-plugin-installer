@@ -4,7 +4,7 @@ import { Notice, Plugin, PluginSettingTab, Setting, type App } from "obsidian";
 interface PluginManifest {
 	id: string;
 	name?: string;
-	main: string;
+	main?: string;
 }
 
 interface ArchivePlugin {
@@ -98,11 +98,11 @@ function findPlugin(archive: Record<string, Uint8Array>): ArchivePlugin {
 			if (
 				typeof manifest.id !== "string"
 				|| !/^[a-z0-9-]+$/.test(manifest.id)
-				|| typeof manifest.main !== "string"
+				|| (manifest.main !== undefined && typeof manifest.main !== "string")
 			) continue;
 
 			const root = path === "manifest.json" ? "" : path.slice(0, -"manifest.json".length);
-			const main = normalizeArchivePath(`${root}${manifest.main}`);
+			const main = normalizeArchivePath(`${root}${manifest.main ?? "main.js"}`);
 			if (!main || !files.has(main)) continue;
 			candidates.push({ manifest: manifest as PluginManifest, root, files });
 		} catch {

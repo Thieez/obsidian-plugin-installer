@@ -100,6 +100,26 @@ test("installs a single plugin from an enclosing ZIP folder", async () => {
 	assert.match(notices.at(-1), /Installed Example/);
 });
 
+test("defaults to main.js when the plugin manifest omits main", async () => {
+	const app = createApp();
+	const plugin = new PluginZipInstaller(app);
+	const archive = zipFile({
+		"note/manifest.json": JSON.stringify({
+			id: "note-thieez",
+			name: "Note.thieez",
+		}),
+		"note/main.js": "note build",
+	});
+
+	await plugin.installArchive(archive);
+
+	assert.equal(
+		new TextDecoder().decode(app.files.get(".obsidian/plugins/note-thieez/main.js")),
+		"note build",
+	);
+	assert.match(notices.at(-1), /Installed Note\.thieez/);
+});
+
 test("rejects ZIPs that do not contain a built plugin", async () => {
 	const app = createApp();
 	const plugin = new PluginZipInstaller(app);
