@@ -1,0 +1,9 @@
+{
+  "id": "plugin-zip-installer",
+  "name": "Plugin ZIP Installer",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Install ZIP builds of unpublished plugins from your device to test development builds, especially on mobile.",
+  "author": "Plugin ZIP Installer contributors",
+  "isDesktopOnly": false
+}

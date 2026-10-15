@@ -1,0 +1,20 @@
+{
+  "name": "obsidian-plugin-zip-installer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Install development plugin ZIPs directly into an Obsidian vault.",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "test": "npm run build && node --test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.8.7",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  }
+}
